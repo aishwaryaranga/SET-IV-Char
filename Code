@@ -1,0 +1,83 @@
+clc;
+close all;
+clear all;
+q=1.602e-19;
+kb=1.381e-23;
+c1=1.0e-20;
+c2=2.1e-19;
+cg=1.0e-18;
+ctotal=c1+c2+cg;
+mega=1000000;
+r1=15*mega;
+r2=250*mega;
+Vg=0;
+q0=0;
+temp=10;
+vmin=-0.5;
+vmax=0.5;
+NV=100;
+dV=(vmax-vmin)/NV;
+for iv=1:NV
+ V(iv)=vmin+iv*dV;
+ Nmin=-20;
+Nmax=20;
+for ne=1:Nmax-Nmin n=Nmin+ne;
+dF1p=q/ctotal*(0.5*q+(n*q-q0)-(c2+cg)*V(iv)+cg*Vg);
+dF1n=q/ctotal*(0.5*q-(n*q-q0)+(c2+cg)*V(iv)-cg*Vg);
+dF2p=q/ctotal*(0.5*q-(n*q-q0)-c1*V(iv)-cg*Vg);
+dF2n=q/ctotal*(0.5*q+(n*q-q0)+c1*V(iv)+cg*Vg);
+if dF1p<0
+T1p(ne)=1/(r1*q*q)*(-dF1p)/(1-exp(dF1p/(kb*temp)));
+else
+T1p(ne)=1e-1;
+end
+if dF1n<0
+T1n(ne)=1/(r1*q*q)*(-dF1n)/(1-exp(dF1n/(kb*temp)));
+else
+T1n(ne)=1e-1;
+end
+if dF2p<0
+T2p(ne)=1/(r2*q*q)*(-dF2p)/(1-exp(dF2p/(kb*temp)));
+else
+T2p(ne)=1e-1;
+end
+if dF2n<0
+T2n(ne)=1/(r2*q*q)*(-dF2n)/(1-exp(dF2n/(kb*temp)));
+else
+T2n(ne)=1e-1;
+end
+end
+p(1)=0.001;
+p(Nmax-Nmin)=0.001; sum=0;
+for ne=2:Nmax-Nmin
+p(ne)=p(ne-1)*(T2n(ne-1)+T1p(ne-1))/(T2p(ne)+T1n(ne)); if
+p(ne)>1e250;
+p(ne)=1e250;
+end
+if p(ne)<1e-250
+ p(ne)=1e-250;
+end
+sum=sum+p(ne);
+end
+for ne=2:Nmax-Nmin p(ne)=p(ne)/sum;
+end
+sumI=0;
+for ne=2:Nmax-Nmin sumI=sumI+p(ne)*(T2p(ne)-T2n(ne));
+end
+I(iv)=q*sumI;
+end
+figure;
+plot(V,I);
+xlabel('drain voltage V(mV)');
+ylabel('dI/dV');
+title('the current drain voltage characteristics for
+SET');
+grid on;
+for iv=1:NV-1 dIdV(iv)=(I(iv+1)-I(iv))/dV;
+end
+figure;
+plot(V(1,1:NV-1),dIdV);
+xlabel('drain voltage V(mV)');
+ylabel('current I(nA)');
+title('dI/dV curve with device parameters');
+grid on;
